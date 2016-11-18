@@ -278,10 +278,17 @@ def trace_object(slf, det, sciframe, varframe, crmask, trim=2.0,
     rejhilo = 1
     bgreg = 20
     traceorder = 2   # Order of polynomial used to trace the objects
-    if triml is None: triml = trim
-    if trimr is None: trimr = trim
+
+    if triml is None:
+        triml = trim
+    if trimr is None:
+        trimr = trim
+
     npix = int(slf._pixwid[det-1][order] - triml - trimr)
-    if bgreg is None: bgreg = npix
+
+    if bgreg is None:
+        bgreg = npix
+
     # Interpolate the science array onto a new grid (with constant spatial slit length)
     msgs.info("Rectifying science frame")
     xint = np.linspace(0.0, 1.0, sciframe.shape[0])
@@ -298,10 +305,12 @@ def trace_object(slf, det, sciframe, varframe, crmask, trim=2.0,
     rec_sciframe = scispl.ev(xx, vv).reshape(recsh)
     rec_varframe = varspl.ev(xx, vv).reshape(recsh)
     rec_crmask   = crmspl.ev(xx, vv).reshape(recsh)
+
     # Update the CR mask to ensure it only contains 1's and 0's
     rec_crmask[np.where(rec_crmask>0.2)] = 1.0
     rec_crmask[np.where(rec_crmask<=0.2)] = 0.0
     msgs.info("Estimating object profiles")
+
     # Smooth the S/N frame
     rec_sigframe_bin = arcyutils.smooth_x(rec_sciframe/np.sqrt(rec_varframe), 1.0-rec_crmask, smthby, rejhilo, maskval)
     #rec_varframe_bin = arcyutils.smooth_x(rec_varframe, 1.0-rec_crmask, smthby, rejhilo, maskval)
@@ -340,20 +349,34 @@ def trace_object(slf, det, sciframe, varframe, crmask, trim=2.0,
     nobj = objl.size
     if msgs._debug['trace_obj']:
         nobj = 1
-    if nobj==1:
+
+    if settings.argflag['science']['extraction']['manual01']['frame'] is not None:
+        msgs.info('Manual extraction desired. Rejecting all automatically detected objects for now.')
+        nobj = 1
+        cent_disp_manual = settings.argflag['science']['extraction']['manual01']['params'][1] #1 is loc of spatial pixel
+        width_disp_manual = settings.argflag['science']['extraction']['manual01']['params'][3][0]
+        objl = np.array([int(cent_disp_manual - slf._lordloc[0][cent_disp_manual]) - width_disp_manual])
+        objr = np.array([int(cent_disp_manual - slf._lordloc[0][cent_disp_manual]) + width_disp_manual])
+        #debugger.set_trace()
+
+    if nobj == 1:
         msgs.info("Found {0:d} object".format(objl.size))
         msgs.info("Tracing {0:d} object".format(objl.size))
+
     else:
         msgs.info("Found {0:d} objects".format(objl.size))
         msgs.info("Tracing {0:d} objects".format(objl.size))
+
     # Max obj
     if nobj > settings.argflag['science']['extraction']['maxnumber']:
         nobj = settings.argflag['science']['extraction']['maxnumber']
         msgs.warn("Restricting to the brightest {:d} objects found".format(nobj))
+
     # Trace objects
     cval = np.zeros(nobj)
     allsfit = np.array([])
     allxfit = np.array([])
+
     for o in range(nobj):
         xfit = np.arange(objl[o],objr[o]).reshape((1,-1))/(npix-1.0)
         cent = np.ma.sum(mask_sigframe[:,objl[o]:objr[o]]*xfit, axis=1)
@@ -380,19 +403,24 @@ def trace_object(slf, det, sciframe, varframe, crmask, trim=2.0,
     msgs.info("Constructing a trace for all objects")
     trcfunc = trcfunc.reshape((-1,1)).repeat(nobj, axis=1)
     trccopy = trcfunc.copy()
-    for o in range(nobj): trcfunc[:,o] += cval[o]
-    if nobj==1: msgs.info("Converting object trace to detector pixels")
-    else: msgs.info("Converting object traces to detector pixels")
+    for o in range(nobj):
+        trcfunc[:,o] += cval[o]
+    if nobj==1:
+        msgs.info("Converting object trace to detector pixels")
+    else:
+        msgs.info("Converting object traces to detector pixels")
     ofst = slf._lordloc[det-1][:,order].reshape((-1,1)).repeat(nobj,axis=1) + triml
     diff = (slf._rordloc[det-1][:,order].reshape((-1,1)).repeat(nobj,axis=1)
             - slf._lordloc[det-1][:,order].reshape((-1,1)).repeat(nobj,axis=1))
     # Convert central trace
     traces = ofst + (diff-triml-trimr)*trcfunc
     # Convert left object trace
-    for o in range(nobj): trccopy[:,o] = trcfunc[:,o] - cval[o] + objl[o]/(npix-1.0)
+    for o in range(nobj):
+        trccopy[:,o] = trcfunc[:,o] - cval[o] + objl[o]/(npix-1.0)
     trobjl = ofst + (diff-triml-trimr)*trccopy
     # Convert right object trace
-    for o in range(nobj): trccopy[:,o] = trcfunc[:,o] - cval[o] + objr[o]/(npix-1.0)
+    for o in range(nobj):
+        trccopy[:,o] = trcfunc[:,o] - cval[o] + objr[o]/(npix-1.0)
     trobjr = ofst + (diff-triml-trimr)*trccopy
     # Make an image of pixel weights for each object
     xint = np.linspace(0.0, 1.0, sciframe.shape[0])
