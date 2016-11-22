@@ -338,6 +338,9 @@ def trace_object(slf, det, sciframe, varframe, crmask, trim=2.0,
     med, mad = arutils.robust_meanstd(trcprof[wm])
     trcprof -= med
     objl, objr, bckl, bckr = arcytrace.find_objects(trcprof, bgreg, mad)
+
+#    debugger.set_trace()
+
     #plt.clf()
     #plt.plot(trcxrng,trcprof,'k-')
     #wl = np.where(bckl[:,0]==1)
@@ -352,12 +355,15 @@ def trace_object(slf, det, sciframe, varframe, crmask, trim=2.0,
 
     if settings.argflag['science']['extraction']['manual01']['frame'] is not None:
         msgs.info('Manual extraction desired. Rejecting all automatically detected objects for now.')
-        nobj = 1
-        cent_disp_manual = settings.argflag['science']['extraction']['manual01']['params'][1] #1 is loc of spatial pixel
-        width_disp_manual = settings.argflag['science']['extraction']['manual01']['params'][3][0]
-        objl = np.array([int(cent_disp_manual - slf._lordloc[0][cent_disp_manual]) - width_disp_manual])
-        objr = np.array([int(cent_disp_manual - slf._lordloc[0][cent_disp_manual]) + width_disp_manual])
-        #debugger.set_trace()
+        if settings.argflag['science']['extraction']['manual01']['params'] is None:
+            msgs.error("No parameters found for manual extraction")
+        else:
+            nobj = 1
+            cent_disp_manual = settings.argflag['science']['extraction']['manual01']['params'][1] #1 is loc of spatial pixel
+            width_disp_manual = settings.argflag['science']['extraction']['manual01']['params'][3][0]
+            objl = np.array([int(cent_disp_manual - slf._lordloc[0][cent_disp_manual]) - width_disp_manual])
+            objr = np.array([int(cent_disp_manual - slf._lordloc[0][cent_disp_manual]) + width_disp_manual])
+#            debugger.set_trace()
 
     if nobj == 1:
         msgs.info("Found {0:d} object".format(objl.size))
