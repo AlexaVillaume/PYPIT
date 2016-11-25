@@ -11,7 +11,7 @@ Overview
 The code can perform bias subtraction using input bias frames
 or by analyzing and subtracting off an estimate from the overscan
 region(s).  The latter is strongly recommended at the present time
-and is the default for armlsd.
+and is the default for ARMLSD.
 
 A future implementation will be to combine the two approaches.
 

@@ -54,3 +54,6 @@ LRIS
 The FITS file writing for LRIS is sufficiently complex that the
 ampsec definition (and file loading)
 is guided by a custom method: arlris.read_lris()
+
+bias
+====
