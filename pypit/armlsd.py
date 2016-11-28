@@ -63,6 +63,7 @@ def ARMLSD(fitsdict, reuseMaster=False, reloadMaster=True):
     settings.argflag['reduce']['masters']['file'] = setup_file
 
     # Start reducing the data
+    #  Loop on setup grouping
     for sc in range(numsci):
         slf = sciexp[sc]
         scidx = slf._idx_sci[0]
